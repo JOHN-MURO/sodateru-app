@@ -1,0 +1,410 @@
+index.html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学習モンスター育成ゲーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Mochiy Pop One', sans-serif;
+            background-color: #f0fdf4; /* green-50 */
+        }
+        .font-press-start {
+            font-family: 'Press Start 2P', cursive;
+        }
+        /* [変更] 2Dステージ風の背景 */
+        #game-screen {
+            background: linear-gradient(to bottom, #87CEEB 0%, #f0f9ff 80%, #228B22 80%, #228B22 100%);
+            position: relative;
+            width: 100%;
+            height: 50vh;
+            border: 4px solid #15803d; /* green-800 */
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        /* [新規] 雲のスタイル */
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.9;
+            box-shadow: 10px 10px 15px rgba(0,0,0,0.05);
+        }
+        .cloud:before, .cloud:after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+        .cloud-1 { top: 15%; left: 10%; width: 100px; height: 30px; }
+        .cloud-1:before { top: -15px; left: 15px; width: 50px; height: 50px; }
+        .cloud-1:after { top: -25px; left: 40px; width: 60px; height: 60px; }
+        .cloud-2 { top: 30%; left: 70%; width: 120px; height: 40px; }
+        .cloud-2:before { top: -20px; left: 20px; width: 60px; height: 60px; }
+        .cloud-2:after { top: -30px; left: 50px; width: 70px; height: 70px; }
+
+        /* [変更] モンスターの配置と動き */
+        .monster {
+            position: absolute;
+            font-size: 2.5rem;
+            /* Y軸(top)を削除し、bottomで地面に配置 */
+            bottom: 10%; 
+            /* transitionの対象をleftとtransformに変更 */
+            transition: left 4s ease-in-out, transform 0.5s ease;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            user-select: none;
+            /* 向きを変えるための起点 */
+            transform-origin: center;
+        }
+        .monster-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1e293b; /* slate-800 */
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 2px 6px;
+            border-radius: 9999px;
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .bubble-button {
+            transition: transform 0.2s ease;
+        }
+        .bubble-button:hover {
+            transform: scale(1.05);
+        }
+        .bubble-button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-green-50 text-green-900 p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-press-start text-green-700">学習モンスター</h1>
+            <p class="mt-2 text-lg">勉強して、君だけのモンスターを育てよう！</p>
+        </header>
+
+        <!-- ゲーム画面 -->
+        <div id="game-screen">
+            <!-- [新規] 雲を追加 -->
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            <!-- モンスターはここに動的に追加されます -->
+        </div>
+
+        <!-- コントロールパネル -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-lg border-2 border-green-200">
+                <h2 class="text-xl font-bold border-b-2 border-green-200 pb-2 mb-3">マイデータ</h2>
+                <div id="my-info-loading" class="text-center">ロード中...</div>
+                <div id="my-info" class="hidden space-y-2">
+                    <div><strong>ID:</strong> <code id="user-id" class="bg-green-100 p-1 rounded text-sm break-all"></code></div>
+                    <div><strong>名前:</strong> <input type="text" id="monster-name-input" class="w-full p-1 border rounded border-green-300 focus:ring-2 focus:ring-green-400 focus:outline-none"></div>
+                    <div id="my-monster-stats"></div>
+                </div>
+            </div>
+
+            <div class="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-lg border-2 border-green-200">
+                <h2 class="text-xl font-bold border-b-2 border-green-200 pb-2 mb-3">学習の記録</h2>
+                <p class="text-sm mb-3">勉強した時間を入力してモンスターを成長させよう！</p>
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="study-hours" min="0.1" step="0.1" placeholder="例: 1.5" class="w-full p-2 border rounded-lg border-green-300 focus:ring-2 focus:ring-green-400 focus:outline-none">
+                    <span class="font-bold">時間</span>
+                </div>
+                <button id="log-study-button" class="w-full mt-3 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md bubble-button">
+                    記録する
+                </button>
+                <p id="growth-type-info" class="text-center text-sm mt-3 font-semibold"></p>
+            </div>
+
+            <div class="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-lg border-2 border-green-200">
+                <h2 class="text-xl font-bold border-b-2 border-green-200 pb-2 mb-3">メッセージログ</h2>
+                <div id="message-log" class="h-24 overflow-y-auto bg-green-50/50 p-2 rounded-lg text-sm space-y-1">
+                    <p>ようこそ！学習を記録してモンスターを育てよう。</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 設定 -------------------------------------------------------------------
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", projectId: "YOUR_PROJECT_ID" };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-monster-breeder';
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const MONSTERS_COLLECTION = `/artifacts/${appId}/public/data/monsters`;
+
+        // --- グローバル変数 ---------------------------------------------------------
+        let currentUserId = null;
+        let myMonsterData = null;
+        let monsterLastPositions = {}; // [新規] モンスターの最後の位置を記録
+
+        // --- UI要素 -----------------------------------------------------------------
+        const gameScreen = document.getElementById('game-screen');
+        const logStudyButton = document.getElementById('log-study-button');
+        const studyHoursInput = document.getElementById('study-hours');
+        const messageLog = document.getElementById('message-log');
+        const userIdDisplay = document.getElementById('user-id');
+        const monsterNameInput = document.getElementById('monster-name-input');
+        const myInfoLoading = document.getElementById('my-info-loading');
+        const myInfoDiv = document.getElementById('my-info');
+        const myMonsterStatsDiv = document.getElementById('my-monster-stats');
+        const growthTypeInfo = document.getElementById('growth-type-info');
+
+        // --- 関数 -------------------------------------------------------------------
+
+        function logMessage(message, type = 'info') {
+            const p = document.createElement('p');
+            p.textContent = message;
+            if (type === 'success') p.classList.add('text-green-700', 'font-bold');
+            if (type === 'error') p.classList.add('text-red-600', 'font-bold');
+            messageLog.prepend(p);
+            if (messageLog.children.length > 10) {
+                messageLog.lastChild.remove();
+            }
+        }
+
+        function getGrowthType() {
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) return { type: 'パワー', emoji: '💪' };
+            if (hour >= 12 && hour < 18) return { type: 'スピード', emoji: '💨' };
+            return { type: 'かしこさ', emoji: '🧠' };
+        }
+        
+        function getMonsterSprite(level) {
+            if (level < 5) return '🥚';
+            if (level < 10) return '🐣';
+            if (level < 20) return '�';
+            if (level < 35) return '🦖';
+            return '🐲';
+        }
+        
+        // [変更] モンスターの描画ロジックを更新
+        function renderMonsters(monsters) {
+            const existingMonsterIds = new Set([...gameScreen.querySelectorAll('.monster')].map(el => el.id.replace('monster-', '')));
+            const incomingMonsterIds = new Set(monsters.map(m => m.id));
+
+            for (const monsterId of existingMonsterIds) {
+                if (!incomingMonsterIds.has(monsterId)) {
+                    const monsterEl = document.getElementById(`monster-${monsterId}`);
+                    if (monsterEl) monsterEl.remove();
+                    delete monsterLastPositions[monsterId]; // 不要になったデータを削除
+                }
+            }
+
+            monsters.forEach(monster => {
+                let monsterEl = document.getElementById(`monster-${monster.id}`);
+
+                if (!monsterEl) {
+                    monsterEl = document.createElement('div');
+                    monsterEl.id = `monster-${monster.id}`;
+                    monsterEl.classList.add('monster');
+                    
+                    const spriteEl = document.createElement('span');
+                    spriteEl.className = 'sprite';
+                    
+                    const nameEl = document.createElement('div');
+                    nameEl.classList.add('monster-name');
+                    
+                    monsterEl.appendChild(spriteEl);
+                    monsterEl.appendChild(nameEl);
+                    gameScreen.appendChild(monsterEl);
+                }
+
+                // [変更] 向きを判定して反映
+                const lastX = monsterLastPositions[monster.id] || monster.position.x;
+                if (monster.position.x < lastX) {
+                    monsterEl.style.transform = 'scaleX(-1)'; // 左向き
+                } else if (monster.position.x > lastX) {
+                    monsterEl.style.transform = 'scaleX(1)'; // 右向き
+                }
+                monsterLastPositions[monster.id] = monster.position.x;
+
+                // [変更] 位置、見た目、名前を更新
+                monsterEl.style.left = `${monster.position.x}%`;
+                // bottomはCSSで固定なので不要
+                monsterEl.querySelector('.sprite').textContent = getMonsterSprite(monster.level);
+                monsterEl.querySelector('.monster-name').textContent = monster.name || 'ななしさん';
+            });
+        }
+        
+        function updateMyInfoUI() {
+            if (!myMonsterData) return;
+            myInfoLoading.classList.add('hidden');
+            myInfoDiv.classList.remove('hidden');
+            
+            userIdDisplay.textContent = currentUserId;
+            monsterNameInput.value = myMonsterData.name || '';
+            
+            myMonsterStatsDiv.innerHTML = `
+                <div class="font-bold text-lg">LV: ${myMonsterData.level} ${getMonsterSprite(myMonsterData.level)}</div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                    <div class="bg-yellow-400 h-2.5 rounded-full" style="width: ${myMonsterData.exp / (myMonsterData.level * 10) * 100}%"></div>
+                </div>
+                <div class="text-xs text-right">${myMonsterData.exp} / ${myMonsterData.level * 10} EXP</div>
+                <div class="mt-2 grid grid-cols-3 gap-2 text-center">
+                    <div>💪<br>${myMonsterData.stats.power}</div>
+                    <div>💨<br>${myMonsterData.stats.speed}</div>
+                    <div>🧠<br>${myMonsterData.stats.intelligence}</div>
+                </div>
+            `;
+        }
+
+        // [変更] モンスターの初期位置を地面に設定
+        async function initializeMyMonster(userId) {
+            const monsterRef = doc(db, MONSTERS_COLLECTION, userId);
+            const monsterSnap = await getDoc(monsterRef);
+
+            if (!monsterSnap.exists()) {
+                const newMonster = {
+                    name: "マイモン",
+                    level: 1,
+                    exp: 0,
+                    stats: { power: 1, speed: 1, intelligence: 1 },
+                    position: { x: Math.random() * 80 + 10, y: 10 }, // yは地面の位置で固定
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                };
+                await setDoc(monsterRef, newMonster);
+                myMonsterData = newMonster;
+                logMessage("新しいモンスターが誕生した！", "success");
+            } else {
+                myMonsterData = monsterSnap.data();
+            }
+            updateMyInfoUI();
+        }
+
+        async function logStudy() {
+            const hours = parseFloat(studyHoursInput.value);
+            if (isNaN(hours) || hours <= 0) {
+                logMessage("正しい学習時間を入力してください。", "error");
+                return;
+            }
+            if (!myMonsterData) {
+                logMessage("モンスターのデータがありません。", "error");
+                return;
+            }
+
+            const growth = getGrowthType();
+            const earnedExp = Math.floor(hours * 5);
+            myMonsterData.exp += earnedExp;
+            
+            const statGain = Math.ceil(hours);
+            if (growth.type === 'パワー') myMonsterData.stats.power += statGain;
+            if (growth.type === 'スピード') myMonsterData.stats.speed += statGain;
+            if (growth.type === 'かしこさ') myMonsterData.stats.intelligence += statGain;
+
+            let levelUp = false;
+            while (myMonsterData.exp >= myMonsterData.level * 10) {
+                myMonsterData.exp -= myMonsterData.level * 10;
+                myMonsterData.level++;
+                levelUp = true;
+            }
+
+            const monsterRef = doc(db, MONSTERS_COLLECTION, currentUserId);
+            await updateDoc(monsterRef, {
+                level: myMonsterData.level,
+                exp: myMonsterData.exp,
+                stats: myMonsterData.stats,
+                updatedAt: serverTimestamp()
+            });
+            
+            logMessage(`${hours}時間学習した！ ${earnedExp}EXP獲得！`, "success");
+            if(levelUp) logMessage(`レベルアップ！ LV.${myMonsterData.level} になった！`, "success");
+            
+            studyHoursInput.value = '';
+            updateMyInfoUI();
+        }
+
+        // [変更] モンスターの移動を横方向のみに
+        async function moveMyMonster() {
+            if (!currentUserId || !myMonsterData) return;
+
+            const newPosition = {
+                x: Math.random() * 85 + 5, // 画面の端に行き過ぎないように調整 (5% to 90%)
+                y: 10 // yは常に地面の位置
+            };
+
+            const monsterRef = doc(db, MONSTERS_COLLECTION, currentUserId);
+            await updateDoc(monsterRef, { position: newPosition });
+        }
+        
+        async function saveName() {
+            const newName = monsterNameInput.value.trim();
+            if (newName && newName !== myMonsterData.name) {
+                myMonsterData.name = newName;
+                const monsterRef = doc(db, MONSTERS_COLLECTION, currentUserId);
+                await updateDoc(monsterRef, { name: newName, updatedAt: serverTimestamp() });
+                logMessage("名前を変更しました！");
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                await initializeMyMonster(currentUserId);
+
+                const q = collection(db, MONSTERS_COLLECTION);
+                onSnapshot(q, (querySnapshot) => {
+                    const allMonsters = [];
+                    querySnapshot.forEach((doc) => {
+                        allMonsters.push({ id: doc.id, ...doc.data() });
+                        if (doc.id === currentUserId) {
+                            myMonsterData = { id: doc.id, ...doc.data() };
+                            updateMyInfoUI();
+                        }
+                    });
+                    renderMonsters(allMonsters);
+                });
+            }
+        });
+        
+        async function signIn() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Authentication failed:", error);
+                logMessage("認証に失敗しました。ページを再読み込みしてください。", "error");
+            }
+        }
+
+        window.addEventListener('load', () => {
+            signIn();
+            
+            logStudyButton.addEventListener('click', logStudy);
+            monsterNameInput.addEventListener('blur', saveName);
+
+            const growth = getGrowthType();
+            growthTypeInfo.textContent = `今の時間帯は ${growth.emoji} ${growth.type} が育ちやすい！`;
+
+            setInterval(moveMyMonster, 5000);
+        });
+
+    </script>
+</body>
+</html>
+�
