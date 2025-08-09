@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/sodateru-app/static/css/main.09b68f5e.css",
-    "main.js": "/sodateru-app/static/js/main.69e3863a.js",
-    "static/js/453.8f3ab32a.chunk.js": "/sodateru-app/static/js/453.8f3ab32a.chunk.js",
+    "main.css": "/sodateru-app/static/css/main.5cc97f7c.css",
+    "main.js": "/sodateru-app/static/js/main.464dae3c.js",
+    "static/js/453.793f1bab.chunk.js": "/sodateru-app/static/js/453.793f1bab.chunk.js",
     "index.html": "/sodateru-app/index.html",
-    "main.09b68f5e.css.map": "/sodateru-app/static/css/main.09b68f5e.css.map",
-    "main.69e3863a.js.map": "/sodateru-app/static/js/main.69e3863a.js.map",
-    "453.8f3ab32a.chunk.js.map": "/sodateru-app/static/js/453.8f3ab32a.chunk.js.map"
+    "main.5cc97f7c.css.map": "/sodateru-app/static/css/main.5cc97f7c.css.map",
+    "main.464dae3c.js.map": "/sodateru-app/static/js/main.464dae3c.js.map",
+    "453.793f1bab.chunk.js.map": "/sodateru-app/static/js/453.793f1bab.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.09b68f5e.css",
-    "static/js/main.69e3863a.js"
+    "static/css/main.5cc97f7c.css",
+    "static/js/main.464dae3c.js"
   ]
 }
