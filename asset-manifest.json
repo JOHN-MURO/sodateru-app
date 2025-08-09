@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/sodateru-app/static/css/main.09b68f5e.css",
-    "main.js": "/sodateru-app/static/js/main.547f400f.js",
+    "main.js": "/sodateru-app/static/js/main.69e3863a.js",
     "static/js/453.8f3ab32a.chunk.js": "/sodateru-app/static/js/453.8f3ab32a.chunk.js",
     "index.html": "/sodateru-app/index.html",
     "main.09b68f5e.css.map": "/sodateru-app/static/css/main.09b68f5e.css.map",
-    "main.547f400f.js.map": "/sodateru-app/static/js/main.547f400f.js.map",
+    "main.69e3863a.js.map": "/sodateru-app/static/js/main.69e3863a.js.map",
     "453.8f3ab32a.chunk.js.map": "/sodateru-app/static/js/453.8f3ab32a.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.09b68f5e.css",
-    "static/js/main.547f400f.js"
+    "static/js/main.69e3863a.js"
   ]
 }
