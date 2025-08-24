@@ -1,0 +1,193 @@
+const USER_DATA_SPREADSHEET_ID = "1wh6xrqXZFNrcFgxYruWvC7CFLYwx-hUsZP5XVErVpKU";
+
+// GETリクエスト（データの読み込み）を処理
+function doGet(e) {
+  const action = e.parameter.action;
+  try {
+    if (action === "getUsers") {
+      return getUsers();
+    }
+    if (action === "getUserData") {
+      const userName = e.parameter.user;
+      if (!userName) throw new Error("User parameter is missing.");
+      return getUserData(userName);
+    }
+    if (action === "getRecentLogs") {
+      const userName = e.parameter.user;
+      if (!userName) throw new Error("User parameter is missing.");
+      return getRecentLogs(userName);
+    }
+    if (action === "getTimeline") {
+        return getTimeline();
+    }
+    throw new Error("Invalid action.");
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ error: error.message })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// POSTリクエスト（データの書き込み）を処理
+function doPost(e) {
+  try {
+    const request = JSON.parse(e.postData.contents);
+    const action = request.action;
+
+    if (action === 'savePetInfo') {
+      return savePetInfo(request.payload);
+    }
+    if (action === 'updateFeedCount') {
+      return updateFeedCount(request.payload);
+    }
+    if (action === 'logEvent') {
+        return logEvent(request.payload);
+    }
+    throw new Error("Invalid POST action.");
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.message })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// タイムラインイベントを記録
+function logEvent(payload) {
+  const { userName, message } = payload;
+  const timelineSheet = SpreadsheetApp.openById(USER_DATA_SPREADSHEET_ID).getSheetByName("タイムラインログ");
+  timelineSheet.appendRow([new Date(), userName, message]);
+  return ContentService.createTextOutput(JSON.stringify({ status: 'success' })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// タイムラインログを取得
+function getTimeline() {
+  const timelineSheet = SpreadsheetApp.openById(USER_DATA_SPREADSHEET_ID).getSheetByName("タイムラインログ");
+  const data = timelineSheet.getDataRange().getValues();
+  const events = data.slice(1).map(row => ({
+    timestamp: new Date(row[0]).toLocaleString('ja-JP'),
+    userName: row[1],
+    message: row[2]
+  })).reverse().slice(0, 20); // 最新20件を取得
+  return ContentService.createTextOutput(JSON.stringify({ events: events })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ユーザーリストとペットの有無を取得
+function getUsers() {
+  const userSheet = SpreadsheetApp.openById(USER_DATA_SPREADSHEET_ID).getSheetByName("シート1");
+  const data = userSheet.getDataRange().getValues();
+  const users = data.slice(1).map(row => ({
+    name: row[0],
+    hasPet: !!row[2] // C列（ペット名）に何か入力されていればtrue
+  })).filter(user => user.name);
+  users.push({ name: "新しいユーザーとして登録", hasPet: false });
+  return ContentService.createTextOutput(JSON.stringify({ users: users })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// 新規ユーザー情報を書き込むロジックを修正
+function savePetInfo(payload) {
+  const { userName, petName, petType, birthDate } = payload;
+  const userSheet = SpreadsheetApp.openById(USER_DATA_SPREADSHEET_ID).getSheetByName("シート1");
+  const data = userSheet.getDataRange().getValues();
+  let userFound = false;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === userName) {
+      userSheet.getRange(i + 1, 2, 1, 4).setValues([[0, petName, petType, birthDate]]);
+      userFound = true;
+      break;
+    }
+  }
+  if (!userFound) {
+    userSheet.appendRow([userName, 0, petName, petType, birthDate]);
+  }
+  logEvent({ userName: userName, message: `${petName}が新しく仲間になった！` });
+  return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Pet info saved' })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ★ 変更点: タイムラインに記録するメッセージを修正
+function updateFeedCount(payload) {
+  const { userName, feedCount, petName, nutrient } = payload;
+  const userSheet = SpreadsheetApp.openById(USER_DATA_SPREADSHEET_ID).getSheetByName("シート1");
+  const data = userSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === userName) {
+      userSheet.getRange(i + 1, 2).setValue(feedCount); // B列を更新
+      logEvent({ userName: userName, message: `${petName}に「${nutrient}」をあげた！` });
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Feed count updated' })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  throw new Error("User not found for update.");
+}
+
+// (getRecentLogsとgetUserData関数は変更なし)
+function getRecentLogs(userName) {
+  const logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("シート1");
+  const logData = logSheet.getDataRange().getValues();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const thirtyDaysAgo = new Date(today); thirtyDaysAgo.setDate(today.getDate() - 29);
+  const dailyLogs = {};
+  for (let i = 0; i < 30; i++) { const date = new Date(thirtyDaysAgo); date.setDate(thirtyDaysAgo.getDate() + i); const dateString = date.toISOString().split('T')[0]; dailyLogs[dateString] = 0; }
+  for (let i = 1; i < logData.length; i++) {
+    const row = logData[i];
+    if (row[2] === userName) {
+      const studyDate = new Date(row[1]); studyDate.setHours(0, 0, 0, 0);
+      if (studyDate >= thirtyDaysAgo && studyDate <= today) {
+        const dateString = studyDate.toISOString().split('T')[0];
+        dailyLogs[dateString] += parseInt(row[3], 10) || 0;
+      }
+    }
+  }
+  const result = Object.keys(dailyLogs).map(dateString => { const date = new Date(dateString); return { dateLabel: `${date.getMonth() + 1}/${date.getDate()}`, hours: dailyLogs[dateString] / 60 }; });
+  return ContentService.createTextOutput(JSON.stringify({ logs: result })).setMimeType(ContentService.MimeType.JSON);
+}
+function getUserData(userName) {
+  const logSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const userSpreadsheet = SpreadsheetApp.openById(USER_DATA_SPREADSHEET_ID);
+  const logSheet = logSpreadsheet.getSheetByName("シート1");
+  const userSheet = userSpreadsheet.getSheetByName("シート1");
+  const userData = userSheet.getDataRange().getValues();
+  const logData = logSheet.getDataRange().getValues();
+  const userBirthDates = {};
+  userData.slice(1).forEach(row => { if (row[0] && row[4]) { const birthDate = new Date(row[4]); birthDate.setHours(0,0,0,0); userBirthDates[row[0]] = birthDate; } });
+  const userTotalMinutes = {};
+  Object.keys(userBirthDates).forEach(name => userTotalMinutes[name] = 0);
+  logData.slice(1).forEach(row => {
+    const logUserName = row[2];
+    const birthDate = userBirthDates[logUserName];
+    if (birthDate) {
+      const studyDate = new Date(row[1]); studyDate.setHours(0,0,0,0);
+      if (studyDate >= birthDate) { userTotalMinutes[logUserName] += parseInt(row[3], 10) || 0; }
+    }
+  });
+  const allTeamHours = Object.values(userTotalMinutes).map(minutes => minutes / 60);
+  allTeamHours.sort((a, b) => a - b);
+  let teamMedian = 0;
+  if (allTeamHours.length > 0) { const mid = Math.floor(allTeamHours.length / 2); teamMedian = allTeamHours.length % 2 !== 0 ? allTeamHours[mid] : (allTeamHours[mid - 1] + allTeamHours[mid]) / 2; }
+  const sortedTeamHoursDesc = allTeamHours.slice().sort((a, b) => b - a);
+  const currentUserTotalHours = (userTotalMinutes[userName] || 0) / 60;
+  const rank = sortedTeamHoursDesc.indexOf(currentUserTotalHours) + 1;
+  let feedCount = 0, petName = "", petType = "", birthDateStr = "";
+  let todayMinutes = 0;
+  const studyDates = new Set();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (let i = 1; i < userData.length; i++) {
+    if (userData[i][0] === userName) {
+      feedCount = parseInt(userData[i][1], 10) || 0; petName = userData[i][2] || ""; petType = userData[i][3] || ""; birthDateStr = userData[i][4] || ""; break;
+    }
+  }
+  logData.slice(1).forEach(row => {
+    if (row[2] === userName) {
+      const studyDate = new Date(row[1]); studyDate.setHours(0,0,0,0);
+      studyDates.add(studyDate.getTime());
+      if (studyDate.getTime() === today.getTime()) { todayMinutes += parseInt(row[3], 10) || 0; }
+    }
+  });
+  const sortedDates = Array.from(studyDates).sort((a, b) => b - a);
+  let streakDays = 0;
+  if (sortedDates.length > 0) {
+    const latestDate = new Date(sortedDates[0]);
+    if ((today.getTime() - latestDate.getTime()) / (1000 * 3600 * 24) <= 1) {
+      streakDays = 1;
+      for (let i = 0; i < sortedDates.length - 1; i++) {
+        if ((new Date(sortedDates[i]).getTime() - new Date(sortedDates[i+1]).getTime()) / (1000 * 3600 * 24) === 1) { streakDays++; } else { break; }
+      }
+    }
+  }
+  const resultData = { totalHours: currentUserTotalHours, streakDays: streakDays, todayHours: todayMinutes / 60, feedCount, petName, petType, birthDate: birthDateStr, teamMedian: teamMedian, rank: rank, teamSize: allTeamHours.length };
+  return ContentService.createTextOutput(JSON.stringify(resultData)).setMimeType(ContentService.MimeType.JSON);
+}
