@@ -19,23 +19,20 @@ const GlobalStyles = () => (
             animation: fade-in 0.5s ease-out forwards;
         }
         @keyframes heart-pop {
-            0% { transform: translateY(0) scale(0); opacity: 1; }
-            50% { transform: translateY(-80px) scale(1.5); opacity: 0.8; }
-            100% { transform: translateY(-150px) scale(1); opacity: 0; }
-        }
-        .animate-heart-pop {
-            animation: heart-pop 1.5s ease-out forwards;
+            0%, 100% { transform: scale(0); opacity: 0; }
+            30% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1) translateY(-100px); opacity: 0; }
         }
     `}</style>
 );
 
 
-// --- アイコンコンポーネント (変更なし) ---
+// --- アイコンコンポーネント ---
 const HomeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
 const TimelineIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>;
 const TeamIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.124-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.124-1.283.356-1.857m0 0a3.001 3.001 0 015.286 0M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
-const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
 const ChartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>;
+
 
 // --- UIコンポーネント ---
 const Card = ({ children, className = '' }) => <div className={`bg-white/70 backdrop-blur-sm border border-white/30 rounded-2xl shadow-lg p-4 ${className}`}>{children}</div>;
@@ -88,21 +85,28 @@ const EvolutionAnimation = ({ petName, oldImage, newImage, onComplete }) => {
         </div>
     );
 };
-const HeartEffect = ({ count }) => {
-    if (count === 0) return null;
+const HeartEffect = ({ trigger }) => {
+    if (!trigger) return null;
     return (
-        <div key={count} className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-            <div className="text-6xl text-red-500 animate-heart-pop">❤️</div>
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+            {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="absolute text-red-500" style={{
+                    fontSize: `${1 + Math.random() * 2}rem`,
+                    animation: `heart-pop 1.5s ${i * 0.1}s ease-out forwards`,
+                    left: `${40 + Math.random() * 20}%`,
+                    top: `${40 + Math.random() * 20}%`,
+                }}>❤️</div>
+            ))}
         </div>
     );
 };
 
 // --- 画像データを管理 ---
 const petImageData = {
-    "スライム": [ "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%8D%B5%E6%9C%9F_%E3%82%B9%E3%83%A9%E3%82%A4%E3%83%A0.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%B9%BC%E5%B9%B4%E6%9C%9F_%E3%82%B9%E3%83%A9%E3%82%A4%E3%83%A0.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%90%E9%95%B7%E6%9C%9F_%E3%82%B9%E3%83%A9%E3%82%A4%E3%83%A0.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%90%E7%86%9F%E6%9C%9F_%E3%82%B9%E3%83%A9%E3%82%A4%E3%83%A0.png" ],
-    "イヌ": [ "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%8D%B5%E6%9C%9F_%E7%8A%AC.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%B9%BC%E5%B9%B4%E6%9C%9F_%E7%8A%AC.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%90%E9%95%B7%E6%9C%9F_%E7%8A%AC.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%90%E7%86%9F%E6%9C%9F_%E7%8A%AC.png" ],
-    "トリ": [ "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%8D%B5%E6%9C%9F_%E9%B3%A5.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%B9%BC%E5%B9%B4%E6%9C%9F_%E9%B3%A5.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%90%E9%95%B7%E6%9C%9F_%E9%B3%A5.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%90%E7%86%9F%E6%9C%9F_%E9%B3%A5.png" ],
-    "カメ": [ "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%8D%B5%E6%9C%9F_%E4%BA%80.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%B9%BC%E5%B9%B4%E6%9C%9F_%E4%BA%80.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%90%E9%95%B7%E6%9C%9F_%E4%BA%80.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%90%E7%86%9F%E6%9C%9F_%E4%BA%80.png" ],
+    "スライム": [ "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%8D%B%E6%9C%9F_%E3%82%B9%E3%83%A9%E3%82%A4%E3%83%A0.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%B9%BC%E5%B9%B4%E6%9C%9F_%E3%82%B9%E3%83%A9%E3%82%A4%E3%83%A0.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%E9%95%B7%E6%9C%9F_%E3%82%B9%E3%83%A9%E3%82%A4%E3%83%A0.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%E9%95%B7%E6%9C%9F_%E3%82%B9%E3%83%A9%E3%82%A4%E3%83%A0.png" ],
+    "イヌ": [ "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%8D%B%E6%9C%9F_%E7%8A%AC.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%B9%BC%E5%B9%B4%E6%9C%9F_%E7%8A%AC.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%E9%95%B7%E6%9C%9F_%E7%8A%AC.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%90%E9%95%B7%E6%9C%9F_%E7%8A%AC.png" ],
+    "トリ": [ "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%8D%B%E6%9C%9F_%E9%B3%A5.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%B9%BC%E5%B9%B4%E6%9C%9F_%E9%B3%A5.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%E9%95%B7%E6%9C%9F_%E9%B3%A5.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%E9%95%B7%E6%9C%9F_%E9%B3%A5.png" ],
+    "カメ": [ "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%8D%B%E6%9C%9F_%E4%BA%80.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E5%B9%BC%E5%B9%B4%E6%9C%9F_%E4%BA%80.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%E9%95%B7%E6%9C%9F_%E4%BA%80.png", "https://github.com/JOHN-MURO/sodateru-app/raw/main/images/%E6%88%E9%95%B7%E6%9C%9F_%E4%BA%80.png" ],
 };
 
 // --- スプレッドシートからデータを取得/書き込みする関数 ---
@@ -128,13 +132,13 @@ const fetchFromSpreadsheet = async (action, params = {}) => {
 
 const writeToSpreadsheet = async (action, payload) => {
     try {
-        await fetch(SPREADSHEET_API_URL, {
+        const response = await fetch(SPREADSHEET_API_URL, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            redirect: 'follow',
             body: JSON.stringify({ action, payload }),
+            headers: { "Content-Type": "text/plain;charset=utf-8" }
         });
-        console.log('Write operation successful');
+        console.log('Write operation status:', response.status);
     } catch (error) {
         console.error(`Failed to write ${action}:`, error);
     }
@@ -278,6 +282,88 @@ const TimelineScreen = ({ onBack }) => {
     );
 };
 
+// ★ 変更: ペットパーク画面を更新 ---
+const PetParkScreen = ({ onBack, userProfile }) => {
+    const [allPets, setAllPets] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const parkSpots = useMemo(() => [
+        { top: '75%', left: '15%' }, { top: '80%', left: '30%' },
+        { top: '70%', left: '55%' }, { top: '65%', left: '85%' },
+        { top: '45%', left: '60%' }, { top: '55%', left: '45%' },
+        { top: '40%', left: '70%' }, { top: '50%', left: '10%' },
+    ], []);
+
+    useEffect(() => {
+        const loadAllPets = async () => {
+            setIsLoading(true);
+            try {
+                const data = await fetchFromSpreadsheet('getAllPets');
+                let petsFromSheet = data.pets || [];
+
+                const myPet = {
+                    userName: userProfile.userName,
+                    petName: userProfile.petName,
+                    petType: userProfile.petType,
+                    totalHours: userProfile.studyData.totalHours, 
+                    lastActivity: new Date().toISOString()
+                };
+
+                const otherPets = petsFromSheet
+                    .filter(p => p.userName !== userProfile.userName)
+                    .sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+
+                const petsToDisplay = [myPet, ...otherPets].slice(0, parkSpots.length);
+                
+                const positionedPets = petsToDisplay.map((pet, index) => ({
+                    ...pet,
+                    spot: parkSpots[index]
+                }));
+
+                setAllPets(positionedPets);
+
+            } catch (error) {
+                console.error("Failed to load all pets:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadAllPets();
+    }, [parkSpots, userProfile]);
+
+    return (
+        <div className="p-4 space-y-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-slate-800">ペットパーク</h1>
+                <button onClick={onBack} className="text-sm font-bold text-indigo-600">戻る</button>
+            </div>
+            <Card className="h-[calc(100vh-12rem)] relative overflow-hidden p-0">
+                <img src="https://raw.githubusercontent.com/JOHN-MURO/sodateru-app/main/petarea.png" alt="Pet park background" className="absolute inset-0 w-full h-full object-cover" />
+                {isLoading ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20"><p className="text-white font-bold">みんなのペットを読み込み中...</p></div>
+                ) : (
+                    allPets.map((pet, index) => {
+                        let evolutionStage = 0;
+                        for (let i = evolutionRequirements.length - 1; i >= 0; i--) {
+                            if (pet.totalHours >= evolutionRequirements[i].hours) {
+                                evolutionStage = i;
+                                break;
+                            }
+                        }
+                        const petImage = petImageData[pet.petType]?.[evolutionStage] || "https://placehold.co/80x80/E0E0E0/A0A0A0?text=Pet";
+                        return (
+                            <div key={index} className="absolute transition-all duration-1000" style={{ top: pet.spot.top, left: pet.spot.left }}>
+                                <img src={petImage} alt={pet.petName} className="w-20 h-20 object-contain animate-pet-float" style={{animationDelay: `${Math.random() * 4}s`}} />
+                                <div className="text-center text-xs font-bold text-slate-700 bg-white/70 px-2 py-0.5 rounded-full -mt-2">{pet.petName}</div>
+                            </div>
+                        )
+                    })
+                )}
+            </Card>
+        </div>
+    )
+}
+
 // --- メインアプリ ---
 const evolutionRequirements = [
     { name: "卵期", hours: 0 }, { name: "幼年期", hours: 20 }, { name: "成長期", hours: 50 }, { name: "成熟期", hours: 80 },
@@ -296,7 +382,7 @@ const MainApp = ({ userProfile, activeView, setActiveView }) => {
     const [isEvolving, setIsEvolving] = useState(false);
     const [evolutionReady, setEvolutionReady] = useState(false);
     const [previousStage, setPreviousStage] = useState(null);
-    const [heartKey, setHeartKey] = useState(0);
+    const [heartTrigger, setHeartTrigger] = useState(false);
 
     const timeSinceBirth = useTimeSince(birthDate);
 
@@ -349,14 +435,15 @@ const MainApp = ({ userProfile, activeView, setActiveView }) => {
         loadData();
     }, [userName]);
 
-    const handleFeedPet = (e) => {
+    const handleFeedPet = async (e) => {
         e.preventDefault();
-        if (!nutrient.trim()) { alert('栄養になる学習内容を入力してください！'); return; }
+        if (!nutrient.trim()) { return; }
         const newFeedCount = feedCount + 1;
         setPetMessage(`「${nutrient}」を栄養にして、もっと賢くなったよ！ありがとう！`);
         setFeedCount(newFeedCount);
-        setHeartKey(k => k + 1);
-        writeToSpreadsheet('updateFeedCount', { userName, feedCount: newFeedCount, petName: petName, nutrient: nutrient.trim() });
+        setHeartTrigger(true);
+        setTimeout(() => setHeartTrigger(false), 2000);
+        await writeToSpreadsheet('updateFeedCount', { userName, feedCount: newFeedCount, petName, nutrient: nutrient.trim() });
         setNutrient('');
     };
 
@@ -377,14 +464,15 @@ const MainApp = ({ userProfile, activeView, setActiveView }) => {
                     onComplete={() => setIsEvolving(false)}
                 />
             )}
-            <HeartEffect count={heartKey} />
+            <HeartEffect trigger={heartTrigger} />
             <div className="min-h-screen bg-transparent pb-24 max-w-6xl mx-auto">
                  <header className="p-4 flex justify-between items-center sticky top-0 bg-white/50 backdrop-blur-md z-10 shadow-sm lg:rounded-t-2xl max-w-md mx-auto lg:max-w-none lg:w-full"><h1 className="text-2xl font-bold text-slate-800">Sodabell</h1><div className="flex items-center gap-3"><span className="font-semibold text-slate-700">{userName}</span><img src={avatar} alt="User Avatar" className="rounded-full w-9 h-9 border-2 border-white" /></div></header>
                 
-                <div className="lg:grid lg:grid-cols-5 lg:gap-8 lg:items-stretch">
+                <div className="lg:grid lg:grid-cols-5 lg:gap-8 lg:items-start">
                     <div className="lg:col-span-2">
-                        <div className="p-4 h-full">
+                        <div className="p-4 h-full flex flex-col">
                             <Card className="relative overflow-hidden h-full flex flex-col">
+                                <div className="flex-grow">
                                 <div className="flex justify-between items-start"><div className="flex items-baseline gap-3"><h2 className="text-2xl font-bold text-slate-800">マイペット</h2><p className="text-xl font-semibold text-indigo-600">{petName}</p></div><div className="text-right"><span className="block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full shadow-sm">レベル {level}</span><span className="block bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full mt-1 shadow-sm">{currentStageName}</span></div></div>
                                 <div className="text-center my-4 relative">
                                     <div className="absolute inset-0 flex justify-center items-center"><div className="w-48 h-48 bg-purple-300 rounded-full opacity-30 blur-2xl"></div></div>
@@ -397,6 +485,7 @@ const MainApp = ({ userProfile, activeView, setActiveView }) => {
                                     <p className="text-center text-xs text-slate-500 mt-2 font-medium">{timeSinceBirth}</p>
                                 </div>
                                 {isLoading ? <p className="text-center text-slate-500">学習データを読み込み中...</p> : <div className="flex justify-around text-center bg-slate-50/50 rounded-xl p-3"><div><p className="text-xs text-slate-500 font-semibold">今日の学習</p><p className="font-bold text-lg text-slate-700">{today.h}<span className="text-sm">時間</span>{today.m}<span className="text-sm">分</span></p></div><div><p className="text-xs text-slate-500 font-semibold">合計学習</p><p className="font-bold text-lg text-indigo-600">{total.h}<span className="text-sm">時間</span>{total.m}<span className="text-sm">分</span></p></div><div><p className="text-xs text-slate-500 font-semibold">継続日数</p><p className="font-bold text-lg text-slate-700">{studyData.streakDays}<span className="text-sm">日</span></p></div></div>}
+                                </div>
                                 {progressData && (<div className="mt-4 pt-4 border-t border-slate-200/80 space-y-4">
                                     <h3 className="text-sm font-bold text-center text-slate-600 uppercase tracking-wider">次の進化まで</h3>
                                     <ProgressBar label="合計学習時間" progress={progressData.hours.progress} currentValue={progressData.hours.current} targetValue={progressData.hours.target} colorClass="bg-gradient-to-r from-green-400 to-cyan-500" />
@@ -406,32 +495,38 @@ const MainApp = ({ userProfile, activeView, setActiveView }) => {
                         </div>
                     </div>
                     
-                    <div className="p-4 space-y-6 lg:p-0 lg:pt-4 lg:col-span-3">
-                        {activeView === 'home' ? (
-                            <div className="space-y-6">
-                                <Card>
-                                    <SectionTitle title="栄養をあげる" /><p className="text-sm text-slate-600 mb-3">学習した内容をペットの栄養にしよう！</p>
-                                    <form onSubmit={handleFeedPet} className="flex gap-2"><input type="text" value={nutrient} onChange={(e) => setNutrient(e.target.value)} placeholder="例：英語の単語 50個" className="flex-grow w-full px-4 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" /><button type="submit" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-2 px-5 rounded-lg hover:opacity-90 transition-opacity duration-300 whitespace-nowrap shadow-lg">あげる</button></form>
-                                </Card>
-                                <Card>
-                                    <SectionTitle title="ペットのメッセージ" /><div className="bg-blue-50/70 p-4 rounded-lg flex items-center gap-4"><img src={currentPetImage} alt="My Pet" className="h-14 w-14 rounded-full flex-shrink-0 object-cover border-2 border-white shadow-md" /><div><p className="text-sm text-slate-700 font-medium">{petMessage}</p></div></div>
-                                </Card>
-                                <Card>
-                                    <div className="flex justify-between items-center mb-3"><h2 className="text-xl font-bold text-slate-700">学習データ</h2><a href="#" className="text-sm font-bold text-indigo-600 flex items-center gap-1"><ChartIcon /> 詳細</a></div>
-                                    {isLoading ? <p className="text-center text-slate-500">グラフデータを読み込み中...</p> : <StudyChart data={monthlyLogs} />}
-                                    <div className="flex justify-around text-center mt-4"><div><p className="text-xs text-slate-500">チーム中央値</p><p className="font-semibold text-slate-600">{teamStats.median.toFixed(1)}<span className="text-xs">時間/日</span></p></div><div><p className="text-xs text-slate-500">今日の学習時間</p><p className="font-semibold text-indigo-600">{studyData.todayHours.toFixed(2)}<span className="text-xs">時間/日</span></p></div><div><p className="text-xs text-slate-500">ランキング</p><p className="font-semibold text-amber-600">{teamStats.rank}<span className="text-xs">位/{teamStats.size}人</span></p></div></div>
-                                </Card>
-                            </div>
-                        ) : (
-                           <div className="lg:max-w-md lg:mx-auto"><TimelineScreen onBack={() => setActiveView('home')} /></div>
-                        )}
+                    <div className="lg:col-span-3">
+                         <div className="p-4 space-y-6 lg:p-0 lg:pt-4">
+                            {activeView === 'home' ? (
+                                <div className="space-y-6">
+                                    <Card>
+                                        <SectionTitle title="栄養をあげる" /><p className="text-sm text-slate-600 mb-3">学習した内容をペットの栄養にしよう！</p>
+                                        <form onSubmit={handleFeedPet} className="flex gap-2"><input type="text" value={nutrient} onChange={(e) => setNutrient(e.target.value)} placeholder="例：英語の単語 50個" className="flex-grow w-full px-4 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" /><button type="submit" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-2 px-5 rounded-lg hover:opacity-90 transition-opacity duration-300 whitespace-nowrap shadow-lg">あげる</button></form>
+                                    </Card>
+                                    <Card>
+                                        <SectionTitle title="ペットのメッセージ" /><div className="bg-blue-50/70 p-4 rounded-lg flex items-center gap-4"><img src={currentPetImage} alt="My Pet" className="h-14 w-14 rounded-full flex-shrink-0 object-cover border-2 border-white shadow-md" /><div><p className="text-sm text-slate-700 font-medium">{petMessage}</p></div></div>
+                                    </Card>
+                                    <Card>
+                                        <div className="flex justify-between items-center mb-3"><h2 className="text-xl font-bold text-slate-700">学習データ</h2><a href="#" className="text-sm font-bold text-indigo-600 flex items-center gap-1"><ChartIcon /> 詳細</a></div>
+                                        {isLoading ? <p className="text-center text-slate-500">グラフデータを読み込み中...</p> : <StudyChart data={monthlyLogs} />}
+                                        <div className="flex justify-around text-center mt-4"><div><p className="text-xs text-slate-500">チーム中央値</p><p className="font-semibold text-slate-600">{teamStats.median.toFixed(1)}<span className="text-xs">時間/日</span></p></div><div><p className="text-xs text-slate-500">今日の学習時間</p><p className="font-semibold text-indigo-600">{studyData.todayHours.toFixed(2)}<span className="text-xs">時間/日</span></p></div><div><p className="text-xs text-slate-500">ランキング</p><p className="font-semibold text-amber-600">{teamStats.rank}<span className="text-xs">位/{teamStats.size}人</span></p></div></div>
+                                    </Card>
+                                </div>
+                            ) : activeView === 'timeline' ? (
+                               <TimelineScreen onBack={() => setActiveView('home')} />
+                            ) : (
+                               <PetParkScreen onBack={() => setActiveView('home')} userProfile={userProfile} />
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
+            {/* ★ 変更点: メニューバーを更新 */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white/60 backdrop-blur-md border-t border-white/30" style={{ maxWidth: '420px', margin: '0 auto' }}>
                 <nav className="flex justify-around items-center h-16">
                     <button onClick={() => setActiveView('home')} className={`${activeView === 'home' ? 'text-indigo-600' : 'text-slate-400'} flex flex-col items-center gap-1`}><HomeIcon /><span className="text-xs font-bold">ホーム</span></button>
                     <button onClick={() => setActiveView('timeline')} className={`${activeView === 'timeline' ? 'text-indigo-600' : 'text-slate-400'} flex flex-col items-center gap-1`}><TimelineIcon /><span className="text-xs font-bold">タイムライン</span></button>
+                    <button onClick={() => setActiveView('park')} className={`${activeView === 'park' ? 'text-indigo-600' : 'text-slate-400'} flex flex-col items-center gap-1`}><TeamIcon /><span className="text-xs font-bold">チーム</span></button>
                 </nav>
             </footer>
         </div>
@@ -550,3 +645,4 @@ export default function App() {
         </>
     );
 }
+
